@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gestor Campos · Gastos e ingresos de tus campos</title>
+  <meta name="description" content="Gestor Campos: app para llevar lo que pagas y lo que cobras de cada campo agrícola, año a año. Pagos, cheques, pago conjunto, pendientes y estadísticas. Angular + Supabase, Android y escritorio." />
+  <link rel="icon" href="assets/gestor-campos-logo.svg" type="image/svg+xml" />
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface-soft: #1f2630;
+      --text: #e6edf3;
+      --muted: #9aa6b2;
+      --accent: #7ee787;
+      --accent-strong: #3fb950;
+      --accent-soft: rgba(63, 185, 80, 0.14);
+      --blue: #58a6ff;
+      --border: #2d3748;
+      --radius: 16px;
+      font-family: 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f6f8f5;
+        --surface: #ffffff;
+        --surface-soft: #eef3ee;
+        --text: #14231a;
+        --muted: #52645a;
+        --accent: #1a7f37;
+        --accent-strong: #1a7f37;
+        --accent-soft: #e3f2e6;
+        --blue: #0969da;
+        --border: #d6e2d8;
+      }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); line-height: 1.6; }
+    a { color: var(--blue); }
+    .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+
+    header.hero {
+      padding: 56px 0 32px;
+      background: radial-gradient(circle at 15% 0%, rgba(88, 166, 255, 0.16), transparent 55%),
+                  radial-gradient(circle at 85% 10%, var(--accent-soft), transparent 50%);
+    }
+    .brand { display: flex; align-items: center; gap: 14px; }
+    .brand img { width: 56px; height: 56px; }
+    .brand span { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.02em; }
+    h1 { font-size: clamp(2rem, 5vw, 3.2rem); line-height: 1.1; margin: 24px 0 12px; letter-spacing: -0.02em; }
+    .lead { font-size: 1.2rem; color: var(--muted); max-width: 720px; margin: 0; }
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px; padding: 12px 18px; border-radius: 12px;
+      font-weight: 600; text-decoration: none; border: 1px solid var(--border); background: var(--surface); color: var(--text);
+    }
+    .btn.primary { background: var(--accent-strong); border-color: var(--accent-strong); color: #04140a; }
+    @media (prefers-color-scheme: light) { .btn.primary { color: #fff; } }
+
+    section { padding: 40px 0; }
+    h2 { font-size: 1.7rem; margin: 0 0 8px; letter-spacing: -0.01em; }
+    .sub { color: var(--muted); margin: 0 0 24px; }
+
+    .video {
+      width: 100%; aspect-ratio: 16 / 9; border-radius: var(--radius); background: #000; display: block;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45); border: 1px solid var(--border);
+    }
+
+    .demo-box {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 20px 22px; border-radius: var(--radius); border: 1px solid var(--border);
+      background: linear-gradient(135deg, var(--accent-soft), transparent 70%), var(--surface);
+    }
+    .demo-box p { margin: 4px 0 0; color: var(--muted); max-width: 640px; }
+
+    .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+    .card h3 { margin: 0 0 6px; font-size: 1.1rem; }
+    .card p { margin: 0; color: var(--muted); }
+    .icon {
+      width: 40px; height: 40px; border-radius: 10px; background: var(--accent-soft);
+      display: flex; align-items: center; justify-content: center; font-size: 1.3rem; margin-bottom: 12px;
+    }
+
+    .shots { display: grid; gap: 18px; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+    .shots figure { margin: 0; }
+    .shots img {
+      width: 100%; height: auto; display: block; border-radius: 26px; border: 1px solid var(--border);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+    }
+    .shots figcaption { text-align: center; color: var(--muted); font-size: 0.92rem; margin-top: 8px; }
+
+    pre {
+      background: #0a0e14; color: #d6e2ee; padding: 16px 18px; border-radius: 12px; overflow-x: auto;
+      font-size: 0.9rem; line-height: 1.5; border: 1px solid var(--border);
+    }
+    code { font-family: ui-monospace, 'Cascadia Code', Consolas, monospace; }
+    p code, li code, td code { background: var(--surface-soft); padding: 1px 6px; border-radius: 6px; font-size: 0.9em; }
+    ol.steps { padding-left: 1.2rem; }
+    ol.steps li { margin-bottom: 8px; }
+    table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); }
+    th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    th { background: var(--surface-soft); }
+    tr:last-child td { border-bottom: 0; }
+    .table-wrap { overflow-x: auto; border-radius: var(--radius); }
+
+    footer { padding: 32px 0 48px; color: var(--muted); font-size: 0.9rem; border-top: 1px solid var(--border); margin-top: 24px; }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap">
+      <div class="brand">
+        <img src="assets/gestor-campos-logo.svg" alt="" />
+        <span>Gestor Campos</span>
+      </div>
+      <h1>Lo que pagas y lo que cobras de cada campo, año a año</h1>
+      <p class="lead">
+        Una app sencilla para llevar las cuentas del campo: los gastos de cada parcela, los cheques de la
+        cosecha, lo que aún queda por pagar y el beneficio de cada campaña. En el móvil (Android) y en el
+        ordenador.
+      </p>
+      <div class="actions">
+        <a class="btn primary" href="#video">▶ Ver el vídeo</a>
+        <a class="btn" href="demo/">Probar la demo</a>
+        <a class="btn" href="https://github.com/quiquealonso/gestor-campos">Código en GitHub</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section id="video">
+      <h2>Cómo funciona, en minuto y medio</h2>
+      <p class="sub">Un recorrido por la app con datos ficticios: campos, pagos, ingresos y estadísticas.</p>
+      <video class="video" controls preload="metadata" playsinline poster="media/gestor-campos-demo-poster.jpg">
+        <source src="media/gestor-campos-demo.mp4" type="video/mp4" />
+        Tu navegador no puede reproducir el vídeo. <a href="media/gestor-campos-demo.mp4">Descárgalo aquí</a>.
+      </video>
+    </section>
+
+    <section id="demo">
+      <div class="demo-box">
+        <div>
+          <h2>Pruébala tú</h2>
+          <p>
+            La demo funciona en el navegador con datos inventados que viven en memoria: puedes crear, editar y
+            borrar lo que quieras, y al recargar vuelve a empezar. Entra con cualquier email y contraseña.
+          </p>
+        </div>
+        <a class="btn primary" href="demo/">Abrir la demo →</a>
+      </div>
+    </section>
+
+    <section>
+      <h2>Qué hace</h2>
+      <p class="sub">Pensada para el día a día: apuntar rápido y saber, de un vistazo, cómo va cada campo.</p>
+      <div class="grid">
+        <div class="card">
+          <div class="icon">🌾</div>
+          <h3>Campos</h3>
+          <p>Cada campo con su superficie (hanegadas), polígono y parcela. Gastos, ingresos y beneficio del año, y el total por hanegada.</p>
+        </div>
+        <div class="card">
+          <div class="icon">🧾</div>
+          <h3>Pagos</h3>
+          <p>Cada gasto con su fecha, importe, categoría y una descripción opcional. Se puede asignar a una campaña distinta del año de la fecha.</p>
+        </div>
+        <div class="card">
+          <div class="icon">⏳</div>
+          <h3>Pendientes</h3>
+          <p>La casilla «Pagado del todo» marca lo que aún se debe. Filtro de pendientes y total por pagar en Gastos.</p>
+        </div>
+        <div class="card">
+          <div class="icon">🔀</div>
+          <h3>Pago conjunto</h3>
+          <p>Un gasto común (el seguro, el tractor…) se reparte solo entre todos los campos según su tamaño, cuadrando al céntimo.</p>
+        </div>
+        <div class="card">
+          <div class="icon">💶</div>
+          <h3>Ingresos</h3>
+          <p>Los cheques de la cosecha, cada uno en su campo, con filtros por campo y por año.</p>
+        </div>
+        <div class="card">
+          <div class="icon">🗺️</div>
+          <h3>Estadísticas</h3>
+          <p>El año como un mapa: beneficio en el centro y ramas con gastos por categoría, ingresos, campos y pendientes. Y la comparación entre años.</p>
+        </div>
+        <div class="card">
+          <div class="icon">🏷️</div>
+          <h3>Categorías</h3>
+          <p>Abonos, riego, mano de obra… con color propio. Al borrar una, decides qué pasa con sus pagos.</p>
+        </div>
+        <div class="card">
+          <div class="icon">🔒</div>
+          <h3>Privada</h3>
+          <p>Login con email y contraseña, sin registro abierto. La base de datos solo responde a los emails autorizados.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Capturas</h2>
+      <p class="sub">La misma app en el móvil y en el ordenador (diseño adaptado a cada pantalla).</p>
+      <div class="shots">
+        <figure><img src="assets/capturas/campos.jpg" alt="Vista general de los campos" loading="lazy" /><figcaption>Campos</figcaption></figure>
+        <figure><img src="assets/capturas/campo.jpg" alt="Detalle de un campo con sus pagos" loading="lazy" /><figcaption>Detalle de un campo</figcaption></figure>
+        <figure><img src="assets/capturas/pendientes.jpg" alt="Gastos pendientes de pagar" loading="lazy" /><figcaption>Pendientes de pagar</figcaption></figure>
+        <figure><img src="assets/capturas/mapa.jpg" alt="Estadísticas del año como mapa mental" loading="lazy" /><figcaption>El año, como un mapa</figcaption></figure>
+        <figure><img src="assets/capturas/entre-anios.jpg" alt="Comparación entre años" loading="lazy" /><figcaption>Entre años</figcaption></figure>
+        <figure><img src="assets/capturas/categorias.jpg" alt="Categorías de gasto" loading="lazy" /><figcaption>Categorías</figcaption></figure>
+      </div>
+    </section>
+
+    <section>
+      <h2>Cómo está hecha</h2>
+      <p class="sub">Sin servidor propio: el front habla directamente con Supabase y la seguridad vive en la base de datos.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Parte</th><th>Tecnología</th><th>Carpeta</th></tr></thead>
+          <tbody>
+            <tr><td>Front</td><td>Angular 20 (standalone, signals), PrimeNG, CSS propio adaptado a móvil</td><td><code>front/</code></td></tr>
+            <tr><td>Datos</td><td>Supabase: PostgreSQL + Auth + API, vía <code>supabase-js</code></td><td><code>supabase/</code></td></tr>
+            <tr><td>Móvil</td><td>Capacitor (APK Android) sobre el mismo front</td><td><code>front/android/</code></td></tr>
+            <tr><td>Escritorio</td><td>Electron (portable para Windows)</td><td><code>front/</code></td></tr>
+            <tr><td>Demo y vídeo</td><td>Modo demo con datos ficticios + grabación automática con Playwright</td><td><code>video/</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <ul>
+        <li><strong>RLS</strong> en todas las tablas: solo los emails de la tabla <code>propietario</code> leen o escriben, y el rol anónimo no tiene acceso.</li>
+        <li><strong>Funciones SQL</strong> para lo delicado: <code>pago_conjunto</code> (reparto en céntimos, método del resto mayor) y <code>eliminar_categoria</code>.</li>
+        <li><strong>Validación</strong> en la base de datos (importes, fechas, años, colores) además de en los formularios.</li>
+      </ul>
+    </section>
+
+    <section id="empezar">
+      <h2>Ponerla en marcha</h2>
+      <ol class="steps">
+        <li>Crea un proyecto en <a href="https://supabase.com">Supabase</a>. En <em>Authentication</em>, desactiva el registro abierto y crea tu usuario.</li>
+        <li>En el <em>SQL Editor</em>, ejecuta <code>supabase/schema.sql</code> y autoriza tu email:
+          <pre><code>insert into public.propietario (email) values ('tu-email@ejemplo.com');</code></pre>
+        </li>
+        <li>Copia la plantilla de configuración y pon tu <em>Project URL</em> y tu clave <em>publishable</em>:
+          <pre><code>cp front/src/enviroments/environment.ts front/src/enviroments/environment.local.ts</code></pre>
+        </li>
+        <li>Arranca la app:
+          <pre><code>cd front
+npm install
+npm start          # http://localhost:4200
+npm run demo       # o la demo con datos ficticios, sin Supabase: http://localhost:4300</code></pre>
+        </li>
+        <li>APK para el móvil (necesita Android Studio): <code>npm run apk</code>. Más detalles en <a href="https://github.com/quiquealonso/gestor-campos/blob/main/MOVIL.md">MOVIL.md</a>.</li>
+      </ol>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      Gestor Campos · Proyecto personal · Los datos del vídeo, las capturas y la demo son ficticios.
+    </div>
+  </footer>
+</body>
+</html>

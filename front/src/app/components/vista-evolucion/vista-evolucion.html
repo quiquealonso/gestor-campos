@@ -1,0 +1,93 @@
+<section class="page page-comparativa">
+  <div class="title-row comparativa-title">
+    <div class="title-with-back">
+      <a routerLink="/" class="back-arrow">← </a>
+      <h1>Estadísticas</h1>
+    </div>
+  </div>
+  <app-estadisticas-tabs />
+
+  @if (cargando()) {
+    <div class="state-box"><span class="spinner"></span><p>Cargando evolución...</p></div>
+  } @else if (error()) {
+    <div class="state-box state-box--error" role="alert">
+      <strong>No se pudo cargar la evolución</strong>
+      <p>{{ error() }}</p>
+      <button type="button" class="action-btn" (click)="reintentar()">Reintentar</button>
+    </div>
+  } @else if (!hayDatos()) {
+    <div class="state-box">
+      <strong>Aún no hay datos que comparar</strong>
+      <p>Registra gastos e ingresos y aquí verás cómo cambia cada año.</p>
+      <a routerLink="/gastos" class="action-btn">Ir a Gastos</a>
+    </div>
+  } @else {
+    <div class="filter-row filter-row--top comp-filtros">
+      <label class="filter-label">
+        Campo:
+        <select [ngModel]="campoFiltroId()" (ngModelChange)="campoFiltroId.set($event === null ? null : +$event)">
+          <option [ngValue]="null">Todos</option>
+          @for (c of campos(); track c.id) {
+            <option [ngValue]="c.id">{{ c.nombre }}</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    <h2>Evolución por años</h2>
+    <div class="chart-scroll">
+      <div class="chart" role="img" aria-label="Gastos e ingresos por año">
+        @for (f of resumenAnual(); track f.anio) {
+          <div class="chart-group chart-group--sel">
+            <div class="chart-bars">
+              <div class="chart-bar chart-bar--gasto" [style.height.%]="alturaBarra(f.gastos)" [title]="'Gastos ' + f.anio + ': ' + f.gastos + ' €'">
+                <span>{{ f.gastos | number: '1.0-0' }}</span>
+              </div>
+              <div class="chart-bar chart-bar--ingreso" [style.height.%]="alturaBarra(f.ingresos)" [title]="'Ingresos ' + f.anio + ': ' + f.ingresos + ' €'">
+                <span>{{ f.ingresos | number: '1.0-0' }}</span>
+              </div>
+            </div>
+            <div class="chart-label">{{ f.anio }}</div>
+          </div>
+        }
+      </div>
+    </div>
+    <div class="chart-legend">
+      <span><i class="dot dot--gasto"></i> Gastos</span>
+      <span><i class="dot dot--ingreso"></i> Ingresos</span>
+    </div>
+
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Año</th>
+            <th>Gastos</th>
+            <th>Ingresos</th>
+            <th>Beneficio</th>
+            <th class="col-desktop">vs. año anterior</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (f of resumenAnual().slice().reverse(); track f.anio) {
+            <tr class="data-row" tabindex="0" [title]="'Ver el mapa de ' + f.anio" (click)="verAnio(f.anio)" (keydown.enter)="verAnio(f.anio)">
+              <td class="cell-nombre">{{ f.anio }}</td>
+              <td class="expense">{{ f.gastos | currency: 'EUR' }}</td>
+              <td class="income">{{ f.ingresos | currency: 'EUR' }}</td>
+              <td [ngClass]="f.beneficio >= 0 ? 'profit' : 'loss'">{{ f.beneficio | currency: 'EUR' }}</td>
+              <td class="col-desktop">
+                @if (f.varBeneficio === null) {
+                  —
+                } @else {
+                  <span [ngClass]="f.varBeneficio >= 0 ? 'profit' : 'loss'">
+                    {{ f.varBeneficio >= 0 ? '▲' : '▼' }} {{ f.varBeneficio | currency: 'EUR' }}
+                  </span>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

@@ -1,0 +1,169 @@
+/* You can add global styles to this file, and also import other style files */
+@import "primeicons/primeicons.css";
+@import "primeflex/primeflex.css";
+
+:root {
+	--bg-main: #0d1117;
+	--bg-surface: #161b22;
+	--bg-surface-soft: #1f2630;
+	--border-color: #2d3748;
+	--text-main: #e6edf3;
+	--text-muted: #9aa6b2;
+	--accent: #58a6ff;
+	--ok: #3fb950;
+	--warn: #f0883e;
+	--danger: #ff6b6b;
+}
+
+html,
+body {
+	overflow-x: hidden;
+	margin: 0;
+	padding: 0;
+	min-height: 100%;
+	background: radial-gradient(circle at 20% 0%, #182332 0%, var(--bg-main) 40%, #0a0f16 100%);
+	color: var(--text-main);
+	font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+a {
+	color: var(--accent);
+}
+
+a:hover {
+	color: #85c0ff;
+}
+
+.p-drawer {
+	background: var(--bg-surface) !important;
+	color: var(--text-main) !important;
+	border-left: 1px solid var(--border-color);
+}
+
+.p-drawer .p-drawer-header {
+	background: #1a2230;
+	color: var(--text-main);
+	border-bottom: 1px solid var(--border-color);
+}
+
+.p-drawer .p-drawer-content {
+	background: var(--bg-surface);
+}
+
+.p-button.p-button-text {
+	color: #c9d6e2;
+}
+
+.p-button.p-button-text:hover {
+	background: rgba(88, 166, 255, 0.14);
+}
+
+/* ===== Estados de carga / error / vacío (compartidos) ===== */
+.state-box {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.75rem;
+	padding: 2rem 1rem;
+	margin: 1rem 0;
+	text-align: center;
+	color: var(--text-muted);
+	border: 1px dashed var(--border-color);
+	border-radius: 12px;
+	background: rgba(255, 255, 255, 0.02);
+}
+
+.state-box strong {
+	color: var(--text-main);
+	font-size: 1.05rem;
+}
+
+.state-box p {
+	margin: 0;
+}
+
+.state-box--error {
+	border-style: solid;
+	border-color: rgba(255, 85, 85, 0.5);
+	background: rgba(255, 85, 85, 0.08);
+	color: #ffb4b4;
+}
+
+.spinner {
+	width: 28px;
+	height: 28px;
+	border: 3px solid var(--border-color);
+	border-top-color: var(--accent);
+	border-radius: 50%;
+	animation: girar 0.8s linear infinite;
+}
+
+@keyframes girar {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+.cat-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	margin-top: 0.15rem;
+	padding: 0.05rem 0.5rem;
+	border-radius: 999px;
+	font-size: 0.72rem;
+	color: var(--text-main);
+	border: 1px solid var(--cat, var(--border-color));
+	background: color-mix(in srgb, var(--cat, #8b949e) 18%, transparent);
+	white-space: nowrap;
+}
+
+.cat-chip::before {
+	content: "";
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: var(--cat, #8b949e);
+}
+
+/* Estado de pago: "Pagado del todo" / pendiente (formularios y tablas de pagos) */
+.check-pagado {
+	flex-direction: row !important;
+	align-items: center;
+	gap: 0.55rem !important;
+	cursor: pointer;
+	user-select: none;
+}
+
+.check-pagado input[type="checkbox"] {
+	/* !important: los estilos de input de cada vista tienen más prioridad */
+	width: 1.15rem !important;
+	height: 1.15rem !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	flex: none;
+	accent-color: var(--ok);
+	cursor: pointer;
+}
+
+.badge-pendiente {
+	display: inline-block;
+	margin-top: 0.2rem;
+	padding: 0.05rem 0.45rem;
+	border: 1px solid rgba(240, 136, 62, 0.55);
+	border-radius: 999px;
+	background: rgba(240, 136, 62, 0.14);
+	color: var(--warn);
+	font-size: 0.72rem;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.pendiente-total {
+	color: var(--warn) !important; /* por encima del color de importes de cada vista */
+}

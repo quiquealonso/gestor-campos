@@ -1,0 +1,5 @@
+node_modules/
+.angular/
+.git.backup/
+# Configuración real de Supabase (URL y clave del proyecto)
+src/enviroments/environment.local.ts

@@ -1,0 +1,162 @@
+<section class="page page-comparativa">
+  <div class="title-row comparativa-title">
+    <div class="title-with-back">
+      <a routerLink="/" class="back-arrow">← </a>
+      <h1>Estadísticas</h1>
+    </div>
+  </div>
+  <app-estadisticas-tabs />
+
+  @if (cargando()) {
+    <div class="state-box"><span class="spinner"></span><p>Cargando estadísticas...</p></div>
+  } @else if (error()) {
+    <div class="state-box state-box--error" role="alert">
+      <strong>No se pudieron cargar las estadísticas</strong>
+      <p>{{ error() }}</p>
+      <button type="button" class="action-btn" (click)="reintentar()">Reintentar</button>
+    </div>
+  } @else if (!hayDatos()) {
+    <div class="state-box">
+      <strong>Aún no hay datos</strong>
+      <p>Registra gastos e ingresos y aquí verás el mapa de cada año.</p>
+      <a routerLink="/gastos" class="action-btn">Ir a Gastos</a>
+    </div>
+  } @else {
+    <div class="filter-row filter-row--top comp-filtros">
+      <label class="filter-label">
+        Año:
+        <select [ngModel]="anioSeleccionado()" (ngModelChange)="anioSeleccionado.set(+$event)">
+          @for (a of anios(); track a) {
+            <option [ngValue]="a">{{ a }}</option>
+          }
+        </select>
+      </label>
+      <label class="filter-label">
+        Campo:
+        <select [ngModel]="campoFiltroId()" (ngModelChange)="campoFiltroId.set($event === null ? null : +$event)">
+          <option [ngValue]="null">Todos</option>
+          @for (c of campos(); track c.id) {
+            <option [ngValue]="c.id">{{ c.nombre }}</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    <div class="mm">
+      <!-- Nodo central: el año -->
+      <div class="mm-centro">
+        <div class="mm-centro-anio">
+          <button type="button" class="mm-flecha" (click)="cambiarAnio(-1)" aria-label="Año anterior">‹</button>
+          <strong>{{ anioSeleccionado() }}</strong>
+          <button type="button" class="mm-flecha" (click)="cambiarAnio(1)" aria-label="Año siguiente">›</button>
+        </div>
+        <span class="mm-centro-label">Beneficio</span>
+        <span class="mm-centro-valor" [ngClass]="resumen().beneficio >= 0 ? 'profit' : 'loss'">
+          {{ resumen().beneficio | currency: 'EUR' }}
+        </span>
+        <span class="mm-centro-sub">
+          {{ beneficioPorUnidad() | currency: 'EUR' }} por hanegada · {{ totalSuperficie() | number: '1.0-2' }} han.
+        </span>
+      </div>
+
+      <div class="mm-ramas">
+        <!-- Rama: Gastos por categoría -->
+        <div class="mm-rama" style="--rama: #ff6b6b">
+          <div class="mm-rama-head">
+            <span><i class="pi pi-wallet" aria-hidden="true"></i> Gastos</span>
+            <strong class="expense">{{ resumen().gastos | currency: 'EUR' }}</strong>
+          </div>
+          <div class="mm-rama-sub">{{ anioSeleccionado() - 1 }}: {{ resumenPrevio().gastos | currency: 'EUR' }}</div>
+          @if (porCategoria().length) {
+            <ul class="mm-hojas">
+              @for (c of porCategoria(); track c.nombre) {
+                <li>
+                  <span class="mm-hoja-nombre"><i class="dot" [style.background]="c.color"></i>{{ c.nombre }}</span>
+                  <span class="mm-hoja-valor">
+                    {{ c.total | currency: 'EUR' }}
+                    <small>{{ c.porcentaje }}%</small>
+                  </span>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="mm-vacio">Sin gastos este año.</p>
+          }
+        </div>
+
+        <!-- Rama: Ingresos por campo -->
+        <div class="mm-rama" style="--rama: #3fb950">
+          <div class="mm-rama-head">
+            <span><i class="pi pi-money-bill" aria-hidden="true"></i> Ingresos</span>
+            <strong class="income">{{ resumen().ingresos | currency: 'EUR' }}</strong>
+          </div>
+          <div class="mm-rama-sub">{{ anioSeleccionado() - 1 }}: {{ resumenPrevio().ingresos | currency: 'EUR' }}</div>
+          @if (ingresosPorCampo().length) {
+            <ul class="mm-hojas">
+              @for (f of ingresosPorCampo(); track f.campo.id) {
+                <li>
+                  <span class="mm-hoja-nombre">{{ f.campo.nombre }}</span>
+                  <span class="mm-hoja-valor income">{{ f.ingresos | currency: 'EUR' }}</span>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="mm-vacio">Sin ingresos este año.</p>
+          }
+        </div>
+
+        <!-- Rama: Beneficio por campo -->
+        <div class="mm-rama" style="--rama: #58a6ff">
+          <div class="mm-rama-head">
+            <span><i class="pi pi-map" aria-hidden="true"></i> Campos</span>
+            <strong>{{ porCampo().length }}</strong>
+          </div>
+          <div class="mm-rama-sub">Beneficio de cada campo</div>
+          @if (porCampo().length) {
+            <ul class="mm-hojas">
+              @for (f of porCampo(); track f.campo.id) {
+                <li>
+                  <a class="mm-hoja-nombre mm-link" [routerLink]="['/campos', f.campo.id]">{{ f.campo.nombre }}</a>
+                  <span class="mm-hoja-valor" [ngClass]="f.beneficio >= 0 ? 'profit' : 'loss'">
+                    {{ f.beneficio | currency: 'EUR' }}
+                    @if (f.beneficioPrevio !== null) {
+                      <small [ngClass]="f.beneficio - f.beneficioPrevio >= 0 ? 'profit' : 'loss'">
+                        {{ f.beneficio - f.beneficioPrevio >= 0 ? '▲' : '▼' }}
+                      </small>
+                    }
+                  </span>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="mm-vacio">No hay campos todavía.</p>
+          }
+        </div>
+
+        <!-- Rama: Pendiente de pagar -->
+        <div class="mm-rama" style="--rama: #f0883e">
+          <div class="mm-rama-head">
+            <span><i class="pi pi-clock" aria-hidden="true"></i> Pendiente</span>
+            <strong class="pendiente-total">{{ totalPendiente() | currency: 'EUR' }}</strong>
+          </div>
+          <div class="mm-rama-sub">Pagos sin pagar del todo</div>
+          @if (pendientes().length) {
+            <ul class="mm-hojas">
+              @for (p of pendientes(); track p.id) {
+                <li>
+                  <span class="mm-hoja-nombre">
+                    {{ p.nombre }}
+                    <small>{{ p.campo?.nombre }} · {{ p.fecha | date: 'dd/MM' }}</small>
+                  </span>
+                  <span class="mm-hoja-valor pendiente-total">{{ p.coste | currency: 'EUR' }}</span>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="mm-vacio mm-ok"><i class="pi pi-check-circle" aria-hidden="true"></i> Todo pagado.</p>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</section>

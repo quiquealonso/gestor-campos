@@ -1,0 +1,425 @@
+<section class="page page-campo">
+  @if (cargando()) {
+    <div class="state-box"><span class="spinner"></span><p>Cargando campo...</p></div>
+  } @else {
+    @if (error()) {
+      <div class="state-box state-box--error" role="alert">
+        <strong>No se pudo cargar el campo</strong>
+        <p>{{ error() }}</p>
+        <button type="button" class="action-btn" (click)="reintentar()">Reintentar</button>
+      </div>
+    }
+
+    @if (mostrarSelector()) {
+      <div class="title-with-back">
+        <a routerLink="/" class="back-arrow">← </a>
+        <h1>Selecciona Un Campo</h1>
+      </div>
+      <div class="selector-grid">
+        @for (item of camposDisponibles(); track item.id) {
+          <a class="campo-card" [routerLink]="['/campos', item.id]">
+            <strong>{{ item.nombre }}</strong>
+            <span>Poligono {{ item.poligono }} - Parcela {{ item.parcela }}</span>
+          </a>
+        } @empty {
+          <div class="state-box">
+            <strong>Todavía no hay campos</strong>
+            <p>Crea tu primer campo desde la vista general.</p>
+            <a routerLink="/" class="action-btn">Ir a Campos</a>
+          </div>
+        }
+      </div>
+    } @else if (campo(); as c) {
+      <div class="campo-detail-shell">
+      <header class="campo-banner">
+        <span class="campo-banner__label">Campo</span>
+        <h1 class="campo-banner__name">{{ c.nombre }}</h1>
+        <span class="campo-banner__meta">Polígono {{ c.poligono }} · Parcela {{ c.parcela }} · {{ c.tamano }} han.</span>
+      </header>
+      <div class="filter-row filter-row--top">
+        <a routerLink="/" class="back-arrow back-arrow--mobile-nav" aria-label="Volver">←</a>
+        <label class="filter-label">
+          Filtrar por año:
+          <select
+            [ngModel]="anioSeleccionado()"
+            (ngModelChange)="onAnioSeleccionadoChange($event)"
+          >
+            @for (ano of anosDisponibles(); track ano) {
+              <option [ngValue]="ano">{{ ano }}</option>
+            }
+          </select>
+        </label>
+      </div>
+
+      <div class="action-group action-group--mobile">
+        <button type="button" class="action-btn" (click)="abrirFormularioCampo()">Editar campo</button>
+        <button type="button" class="action-btn" (click)="abrirFormularioCheque()">Añadir cheque</button>
+        <button type="button" class="action-btn" (click)="abrirFormularioPago()">Añadir pago</button>
+      </div>
+
+      <div class="title-row campo-detail-title">
+        <div class="title-with-back">
+          <a routerLink="/" class="back-arrow">← </a>
+          <h1>{{ c.nombre }}</h1>
+        </div>
+        <div class="action-group action-group--desktop">
+          <button type="button" class="action-btn" (click)="abrirFormularioCampo()">Editar campo</button>
+          <button type="button" class="action-btn" (click)="abrirFormularioPago()">Añadir pago</button>
+          <button type="button" class="action-btn" (click)="abrirFormularioCheque()">Añadir cheque</button>
+        </div>
+      </div>
+
+      @if (mostrarFormularioCampo()) {
+        <div class="form-panel" role="presentation">
+          <button
+            type="button"
+            class="form-panel-backdrop"
+            aria-label="Cerrar"
+            (click)="cerrarFormularioCampo()"
+          ></button>
+          <div
+            class="form-card form-card--dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="dialog-editar-campo-title"
+            (click)="$event.stopPropagation()"
+          >
+            <h2 id="dialog-editar-campo-title">Editar campo</h2>
+            <p class="dialog-lead">Datos del campo <strong>{{ c.nombre }}</strong></p>
+            <div class="dialog-field-summary">
+              <div><span>Tamaño</span> {{ campoEdicion.tamano }}</div>
+              <div><span>Polígono</span> {{ campoEdicion.poligono }}</div>
+              <div><span>Parcela</span> {{ campoEdicion.parcela }}</div>
+              <div><span>Total gastos</span> {{ totalGastos() | currency: 'EUR' }}</div>
+              <div><span>Total ingresos</span> {{ totalIngresos() | currency: 'EUR' }}</div>
+            </div>
+            <div class="form-grid">
+              <label>
+                Nombre
+                <input type="text" [(ngModel)]="campoEdicion.nombre" />
+              </label>
+              <label>
+                Tamaño
+                <input type="number" [(ngModel)]="campoEdicion.tamano" />
+              </label>
+              <label>
+                Polígono
+                <input type="number" [(ngModel)]="campoEdicion.poligono" />
+              </label>
+              <label>
+                Parcela
+                <input type="number" [(ngModel)]="campoEdicion.parcela" />
+              </label>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="action-btn" (click)="guardarCampo()" [disabled]="guardandoCampo()">
+                {{ guardandoCampo() ? 'Guardando...' : 'Guardar cambios' }}
+              </button>
+              <button type="button" class="action-btn secondary" (click)="cerrarFormularioCampo()">
+                Cancelar
+              </button>
+              <button type="button" class="action-btn danger" (click)="abrirEliminarCampo()">
+                Eliminar campo
+              </button>
+            </div>
+            @if (mensajeCampo()) {
+              <p class="form-message">{{ mensajeCampo() }}</p>
+            }
+          </div>
+        </div>
+      }
+
+      @if (mostrarFormularioPago()) {
+        <div class="form-panel" role="presentation">
+          <button
+            type="button"
+            class="form-panel-backdrop"
+            aria-label="Cerrar"
+            (click)="cerrarFormularioPago()"
+          ></button>
+          <div
+            class="form-card form-card--dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="dialog-pago-title"
+            (click)="$event.stopPropagation()"
+          >
+            <h2 id="dialog-pago-title">{{ editandoPagoId() ? 'Editar pago' : 'Nuevo pago' }}</h2>
+            <p class="dialog-lead">
+              {{
+                editandoPagoId()
+                  ? 'Modifica el gasto registrado en este campo.'
+                  : 'Registra un nuevo gasto para ' + c.nombre + '.'
+              }}
+            </p>
+            <div class="form-grid">
+              <label>
+                Fecha
+                <input type="date" [(ngModel)]="nuevoPago.fecha" />
+              </label>
+              <label>
+                Año (opcional)
+                <input type="number" [(ngModel)]="nuevoPago.anio" />
+              </label>
+              <label>
+                Nombre
+                <input type="text" [(ngModel)]="nuevoPago.nombre" />
+              </label>
+              <label>
+                Coste
+                <input type="number" step="0.01" [(ngModel)]="nuevoPago.coste" />
+              </label>
+              <div class="full-row">
+                <app-categoria-select [(categorias)]="categorias" [(valor)]="categoriaFormularioId" />
+              </div>
+              <label class="full-row">
+                Descripción (opcional)
+                <input type="text" [(ngModel)]="nuevoPago.descripcion" />
+              </label>
+              <label class="full-row check-pagado">
+                <input type="checkbox" [(ngModel)]="nuevoPago.pagado" />
+                Pagado del todo
+              </label>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="action-btn" (click)="guardarPago()" [disabled]="guardandoPago() || eliminandoPago()">
+                {{ guardandoPago() ? 'Guardando...' : (editandoPagoId() ? 'Actualizar pago' : 'Guardar pago') }}
+              </button>
+              <button type="button" class="action-btn secondary" (click)="cerrarFormularioPago()">
+                Cancelar
+              </button>
+              @if (editandoPagoId()) {
+                <button
+                  type="button"
+                  class="action-btn danger"
+                  (click)="eliminarPagoEnEdicion()"
+                  [disabled]="guardandoPago() || eliminandoPago()"
+                >
+                  {{ eliminandoPago() ? 'Eliminando...' : 'Eliminar' }}
+                </button>
+              }
+            </div>
+            @if (mensajePago()) {
+              <p class="form-message">{{ mensajePago() }}</p>
+            }
+          </div>
+        </div>
+      }
+
+      @if (mostrarFormularioCheque()) {
+        <div class="form-panel" role="presentation">
+          <button
+            type="button"
+            class="form-panel-backdrop"
+            aria-label="Cerrar"
+            (click)="cerrarFormularioCheque()"
+          ></button>
+          <div
+            class="form-card form-card--dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="dialog-cheque-title"
+            (click)="$event.stopPropagation()"
+          >
+            <h2 id="dialog-cheque-title">Nuevo cheque</h2>
+            <p class="dialog-lead">Registra un ingreso por cheque en {{ c.nombre }}.</p>
+            <div class="form-grid">
+              <label>
+                Dia
+                <input type="date" [(ngModel)]="nuevoCheque.dia" />
+              </label>
+              <label>
+                Año (opcional)
+                <input type="number" [(ngModel)]="nuevoCheque.anio" />
+              </label>
+              <label>
+                Cantidad
+                <input type="number" step="0.01" [(ngModel)]="nuevoCheque.cantidad" />
+              </label>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="action-btn" (click)="guardarCheque()" [disabled]="guardandoCheque()">
+                {{ guardandoCheque() ? 'Guardando...' : 'Guardar cheque' }}
+              </button>
+              <button type="button" class="action-btn secondary" (click)="cerrarFormularioCheque()">
+                Cancelar
+              </button>
+            </div>
+            @if (mensajeCheque()) {
+              <p class="form-message">{{ mensajeCheque() }}</p>
+            }
+          </div>
+        </div>
+      }
+
+      <div class="field-grid field-grid--desktop">
+        <div><span>Tamano:</span> {{ c.tamano }}</div>
+        <div><span>Poligono:</span> {{ c.poligono }}</div>
+        <div><span>Parcela:</span> {{ c.parcela }}</div>
+        <div><span>Total Gastos:</span> {{ totalGastos() | currency: 'EUR' }}</div>
+        <div><span>Total Ingresos:</span> {{ totalIngresos() | currency: 'EUR' }}</div>
+      </div>
+      </div>
+
+      <h2>Pagos</h2>
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="sortable" (click)="cambiarOrden('fecha')">
+                Fecha
+                @if (ordenPor() === 'fecha') {
+                  <span class="sort-icon">{{ ordenAscendente() ? '↑' : '↓' }}</span>
+                }
+              </th>
+              <th>Nombre</th>
+              <th class="sortable" (click)="cambiarOrden('coste')">
+                Coste
+                @if (ordenPor() === 'coste') {
+                  <span class="sort-icon">{{ ordenAscendente() ? '↑' : '↓' }}</span>
+                }
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (pago of pagosEnPagina(); track pago.id) {
+              <tr
+                class="pago-row"
+                tabindex="0"
+                (click)="editarPago(pago)"
+                (keydown.enter)="editarPago(pago)"
+                (keydown.space)="$event.preventDefault(); editarPago(pago)"
+              >
+                <td>{{ pago.fecha | date: 'dd/MM/yyyy' }}</td>
+                <td>
+                {{ pago.nombre }}
+                @if (pago.categoria) {
+                  <br /><span class="cat-chip" [style.--cat]="pago.categoria.color">{{ pago.categoria.nombre }}</span>
+                }
+              </td>
+                <td class="coste-cell">
+                  {{ pago.coste | currency: 'EUR' }}
+                  @if (pago.pagado === false) {
+                    <br /><span class="badge-pendiente">Pendiente</span>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="3" class="empty-row">Este campo no tiene pagos registrados.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (totalPaginas() > 1) {
+        <div class="pagination">
+          <button type="button" class="pagination-btn" (click)="paginaAnterior()" [disabled]="paginaActual() === 1" aria-label="Página anterior">
+            &#8249; Anterior
+          </button>
+          <span class="pagination-info">{{ paginaActual() }} / {{ totalPaginas() }}</span>
+          <button type="button" class="pagination-btn" (click)="paginaSiguiente()" [disabled]="paginaActual() === totalPaginas()" aria-label="Página siguiente">
+            Siguiente &#8250;
+          </button>
+        </div>
+      }
+
+      <h2>Cheques</h2>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Dia</th>
+            <th>Año</th>
+            <th>Cantidad</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (cheque of chequesFiltrados(); track cheque.id) {
+            <tr>
+              <td>{{ cheque.dia | date: 'dd/MM/yyyy' }}</td>
+              <td>{{ cheque.anio || (cheque.dia | date: 'yyyy') }}</td>
+              <td>{{ cheque.cantidad | currency: 'EUR' }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="3">Este campo no tiene cheques registrados.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  }
+    @if (pagoAEliminar(); as pagoEliminar) {
+      <div class="form-panel form-panel--confirm" role="presentation">
+        <button type="button" class="form-panel-backdrop" aria-label="Cancelar" (click)="cancelarEliminacion()"></button>
+        <div
+          class="form-card form-card--dialog form-card--confirm"
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="dialog-eliminar-title"
+          (click)="$event.stopPropagation()"
+        >
+          <h2 id="dialog-eliminar-title">Eliminar pago</h2>
+          <p class="dialog-lead">
+            ¿Seguro que quieres eliminar el pago <strong>{{ pagoEliminar.nombre }}</strong>? Esta acción no se puede deshacer.
+          </p>
+          <div class="form-actions">
+            <button type="button" class="action-btn danger" (click)="confirmarEliminacion()" [disabled]="eliminandoPago()">
+              {{ eliminandoPago() ? 'Eliminando...' : 'Eliminar' }}
+            </button>
+            <button type="button" class="action-btn secondary" (click)="cancelarEliminacion()" [disabled]="eliminandoPago()">
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+    @if (confirmandoEliminarCampo(); as _) {
+      @if (campo(); as cc) {
+        <div class="form-panel form-panel--confirm" role="presentation">
+          <button type="button" class="form-panel-backdrop" aria-label="Cancelar" (click)="cancelarEliminarCampo()"></button>
+          <div
+            class="form-card form-card--dialog form-card--confirm"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="dialog-eliminar-campo-title"
+            (click)="$event.stopPropagation()"
+          >
+            <h2 id="dialog-eliminar-campo-title">Eliminar campo</h2>
+            <p class="dialog-lead">
+              Vas a eliminar <strong>{{ cc.nombre }}</strong> y con él
+              <strong>{{ cc.numPagos ?? pagos().length }} pago(s)</strong> y
+              <strong>{{ cc.numCheques ?? cheques().length }} cheque(s)</strong>.
+              Esta acción no se puede deshacer.
+            </p>
+            <label>
+              Escribe «{{ cc.nombre }}» para confirmar
+              <input
+                type="text"
+                [ngModel]="textoConfirmacionCampo()"
+                (ngModelChange)="textoConfirmacionCampo.set($event)"
+                autocomplete="off"
+              />
+            </label>
+            <div class="form-actions">
+              <button
+                type="button"
+                class="action-btn danger"
+                (click)="confirmarEliminarCampo()"
+                [disabled]="!puedeConfirmarEliminarCampo() || eliminandoCampo()"
+              >
+                {{ eliminandoCampo() ? 'Eliminando...' : 'Eliminar definitivamente' }}
+              </button>
+              <button type="button" class="action-btn secondary" (click)="cancelarEliminarCampo()" [disabled]="eliminandoCampo()">
+                Cancelar
+              </button>
+            </div>
+            @if (errorEliminarCampo()) {
+              <p class="form-message">{{ errorEliminarCampo() }}</p>
+            }
+          </div>
+        </div>
+      }
+    }
+</section>

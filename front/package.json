@@ -1,0 +1,97 @@
+{
+  "name": "gestor-campos",
+  "version": "0.0.0",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "build:electron": "ng build --configuration production",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test",
+    "electron": "npm run build:electron-main && electron .",
+    "electron-dev": "concurrently \"npm start\" \"wait-on http://localhost:4200 && npm run electron\"",
+    "electron-build": "npm run build:electron && npm run build:electron-main && electron-builder",
+    "apk:sync": "ng build --configuration production && cap sync android",
+    "apk:open": "cap open android",
+    "build:electron-main": "tsc electron-main.ts --target es2020 --module commonjs --esModuleInterop --skipLibCheck",
+    "apk": "npm run apk:sync && cd android && gradlew.bat assembleDebug && cd .. && node -e \"require('fs').copyFileSync('android/app/build/outputs/apk/debug/app-debug.apk','../GestorCampos.apk')\"",
+    "demo": "ng serve --configuration demo",
+    "build:demo": "ng build --configuration demo"
+  },
+  "prettier": {
+    "printWidth": 100,
+    "singleQuote": true,
+    "overrides": [
+      {
+        "files": "*.html",
+        "options": {
+          "parser": "angular"
+        }
+      }
+    ]
+  },
+  "private": true,
+  "dependencies": {
+    "@angular/common": "^20.3.0",
+    "@angular/compiler": "^20.3.0",
+    "@angular/core": "^20.3.0",
+    "@angular/forms": "^20.3.0",
+    "@angular/platform-browser": "^20.3.0",
+    "@angular/router": "^20.3.0",
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/core": "^8.5.3",
+    "@primeuix/themes": "^1.2.5",
+    "@supabase/supabase-js": "^2.117.2",
+    "primeflex": "^4.0.0",
+    "primeicons": "^7.0.0",
+    "primeng": "^20.2.0",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0",
+    "zone.js": "~0.15.0"
+  },
+  "devDependencies": {
+    "@angular/build": "^20.3.2",
+    "@angular/cli": "^20.3.2",
+    "@angular/compiler-cli": "^20.3.0",
+    "@capacitor/cli": "^8.5.3",
+    "@types/jasmine": "~5.1.0",
+    "concurrently": "^9.2.1",
+    "electron": "^40.7.0",
+    "electron-builder": "^26.8.1",
+    "electron-is-dev": "^3.0.1",
+    "jasmine-core": "~5.9.0",
+    "karma": "~6.4.0",
+    "karma-chrome-launcher": "~3.2.0",
+    "karma-coverage": "~2.2.0",
+    "karma-jasmine": "~5.1.0",
+    "karma-jasmine-html-reporter": "~2.1.0",
+    "typescript": "~5.9.2",
+    "wait-on": "^9.0.4"
+  },
+  "main": "electron-main.js",
+  "homepage": "./",
+  "build": {
+    "appId": "com.gestor-campos.app",
+    "productName": "Gestor Campos",
+    "directories": {
+      "buildResources": "public",
+      "output": "dist-electron"
+    },
+    "files": [
+      "electron-main.js",
+      "preload.js",
+      "dist/gestor-campos/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    }
+  }
+}

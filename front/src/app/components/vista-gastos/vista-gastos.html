@@ -1,0 +1,260 @@
+<section class="page page-gastos">
+  @if (cargando()) {
+    <div class="state-box"><span class="spinner"></span><p>Cargando gastos...</p></div>
+  } @else {
+    @if (error()) {
+      <div class="state-box state-box--error" role="alert">
+        <strong>No se pudieron cargar los gastos</strong>
+        <p>{{ error() }}</p>
+        <button type="button" class="action-btn" (click)="reintentar()">Reintentar</button>
+      </div>
+    } @else {
+
+    <div class="gastos-header">
+    <div class="filter-row filter-row--top">
+      <a routerLink="/" class="back-arrow back-arrow--mobile-nav" aria-label="Volver">←</a>
+      <label class="filter-label">
+        Filtrar por año:
+        <select
+          [ngModel]="anioSeleccionado()"
+          (ngModelChange)="onAnioSeleccionadoChange($event)"
+        >
+          @for (ano of anosDisponibles(); track ano) {
+            <option [ngValue]="ano">{{ ano }}</option>
+          }
+        </select>
+      </label>
+      <label class="filter-label">
+        Categoría:
+        <select [ngModel]="categoriaFiltroId()" (ngModelChange)="onCategoriaFiltroChange($event)">
+          <option [ngValue]="null">Todas</option>
+          @for (c of categorias(); track c.id) {
+            <option [ngValue]="c.id">{{ c.nombre }}</option>
+          }
+          <option [ngValue]="-1">Sin asignar</option>
+        </select>
+      </label>
+      <label class="filter-label">
+        Estado:
+        <select [ngModel]="estadoFiltro()" (ngModelChange)="estadoFiltro.set($event); paginaActual.set(1)">
+          <option value="todos">Todos</option>
+          <option value="pendientes">Pendientes de pagar</option>
+          <option value="pagados">Pagados</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="action-group action-group--mobile">
+      <button type="button" class="action-btn" (click)="abrirFormularioPago()">Nuevo gasto</button>
+    </div>
+
+    <div class="title-row gastos-title">
+      <div class="title-with-back">
+        <a routerLink="/" class="back-arrow">← </a>
+        <h1>Gastos Totales</h1>
+      </div>
+      <div class="action-group action-group--desktop">
+        <button type="button" class="action-btn" (click)="abrirFormularioPago()">Nuevo gasto</button>
+      </div>
+    </div>
+    </div>
+
+    <div class="summary-inline">
+      <div class="summary-item-inline">
+        <span>Total</span>
+        <strong>{{ totalGastos() | currency: 'EUR' }}</strong>
+      </div>
+      <div class="summary-item-inline">
+        <span>Cantidad</span>
+        <strong>{{ pagosFiltrados().length }}</strong>
+      </div>
+      @if (totalPendiente() > 0) {
+        <div class="summary-item-inline">
+          <span>Pendiente</span>
+          <strong class="pendiente-total">{{ totalPendiente() | currency: 'EUR' }}</strong>
+        </div>
+      }
+    </div>
+
+    @if (mostrarFormulario()) {
+      <div class="form-panel" role="presentation">
+        <button
+          type="button"
+          class="form-panel-backdrop"
+          aria-label="Cerrar"
+          (click)="cerrarFormularioPago()"
+        ></button>
+        <div
+          class="form-card form-card--dialog"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="dialog-gasto-title"
+          (click)="$event.stopPropagation()"
+        >
+          <h2 id="dialog-gasto-title">{{ editandoPagoId() ? 'Editar pago' : 'Nuevo gasto' }}</h2>
+          <p class="dialog-lead">
+            {{
+              editandoPagoId()
+                ? 'Modifica el gasto o elimínalo.'
+                : 'Registra un nuevo gasto y asígnalo a un campo.'
+            }}
+          </p>
+          <div class="form-grid">
+            <label>
+              Campo
+              <select [ngModel]="campoFormularioId()" (ngModelChange)="campoFormularioId.set($event)" [disabled]="!!editandoPagoId()">
+                <option [ngValue]="null">-- Selecciona un campo --</option>
+                @for (campo of campos(); track campo.id) {
+                  <option [ngValue]="campo.id">{{ campo.nombre }}</option>
+                }
+              </select>
+            </label>
+            <label>
+              Fecha
+              <input type="date" [(ngModel)]="nuevoPago.fecha" />
+            </label>
+            <label>
+              Año (opcional)
+              <input type="number" [(ngModel)]="nuevoPago.anio" />
+            </label>
+            <label>
+              Nombre
+              <input type="text" [(ngModel)]="nuevoPago.nombre" />
+            </label>
+            <label>
+              Coste
+              <input type="number" step="0.01" [(ngModel)]="nuevoPago.coste" />
+            </label>
+            <div class="full-row">
+              <app-categoria-select [(categorias)]="categorias" [(valor)]="categoriaFormularioId" />
+            </div>
+            <label class="full-row">
+              Descripción (opcional)
+              <input type="text" [(ngModel)]="nuevoPago.descripcion" />
+            </label>
+            <label class="full-row check-pagado">
+              <input type="checkbox" [(ngModel)]="nuevoPago.pagado" />
+              Pagado del todo
+            </label>
+          </div>
+          <div class="form-actions">
+            <button
+              type="button"
+              class="action-btn"
+              (click)="guardarPago()"
+              [disabled]="guardandoPago() || eliminandoPago()"
+            >
+              {{ guardandoPago() ? 'Guardando...' : (editandoPagoId() ? 'Actualizar pago' : 'Guardar pago') }}
+            </button>
+            <button type="button" class="action-btn secondary" (click)="cerrarFormularioPago()">
+              Cancelar
+            </button>
+            @if (editandoPagoId()) {
+              <button
+                type="button"
+                class="action-btn danger"
+                (click)="eliminarPagoEnEdicion()"
+                [disabled]="guardandoPago() || eliminandoPago()"
+              >
+                {{ eliminandoPago() ? 'Eliminando...' : 'Eliminar' }}
+              </button>
+            }
+          </div>
+          @if (mensajePago()) {
+            <p class="form-message">{{ mensajePago() }}</p>
+          }
+        </div>
+      </div>
+    }
+
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th class="sortable" (click)="cambiarOrden('fecha')">
+              Fecha
+              @if (ordenPor() === 'fecha') {
+                <span class="sort-icon">{{ ordenAscendente() ? '↑' : '↓' }}</span>
+              }
+            </th>
+            <th>Nombre</th>
+            <th class="sortable" (click)="cambiarOrden('coste')">
+              Coste
+              @if (ordenPor() === 'coste') {
+                <span class="sort-icon">{{ ordenAscendente() ? '↑' : '↓' }}</span>
+              }
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (pago of pagosEnPagina(); track pago.id) {
+            <tr
+              class="pago-row"
+              tabindex="0"
+              (click)="editarPago(pago)"
+              (keydown.enter)="editarPago(pago)"
+              (keydown.space)="$event.preventDefault(); editarPago(pago)"
+            >
+              <td>{{ pago.fecha | date: 'dd/MM/yyyy' }}</td>
+              <td>
+                {{ pago.nombre }}
+                @if (pago.categoria) {
+                  <br /><span class="cat-chip" [style.--cat]="pago.categoria.color">{{ pago.categoria.nombre }}</span>
+                }
+              </td>
+              <td class="coste-cell">
+                {{ pago.coste | currency: 'EUR' }}
+                @if (pago.pagado === false) {
+                  <br /><span class="badge-pendiente">Pendiente</span>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="3" class="empty-row">{{ categoriaFiltroId() !== null ? 'No hay gastos de esta categoría en ' + anioSeleccionado() + '.' : 'No hay gastos registrados en ' + anioSeleccionado() + '. Pulsa «Nuevo gasto» para añadir el primero.' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (totalPaginas() > 1) {
+      <div class="pagination">
+        <button type="button" class="pagination-btn" (click)="paginaAnterior()" [disabled]="paginaActual() === 1" aria-label="Página anterior">
+          &#8249; Anterior
+        </button>
+        <span class="pagination-info">{{ paginaActual() }} / {{ totalPaginas() }}</span>
+        <button type="button" class="pagination-btn" (click)="paginaSiguiente()" [disabled]="paginaActual() === totalPaginas()" aria-label="Página siguiente">
+          Siguiente &#8250;
+        </button>
+      </div>
+    }
+    }
+  }
+
+    @if (pagoAEliminar(); as pagoEliminar) {
+      <div class="form-panel form-panel--confirm" role="presentation">
+        <button type="button" class="form-panel-backdrop" aria-label="Cancelar" (click)="cancelarEliminacion()"></button>
+        <div
+          class="form-card form-card--dialog form-card--confirm"
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="dialog-eliminar-title"
+          (click)="$event.stopPropagation()"
+        >
+          <h2 id="dialog-eliminar-title">Eliminar pago</h2>
+          <p class="dialog-lead">
+            ¿Seguro que quieres eliminar el pago <strong>{{ pagoEliminar.nombre }}</strong>? Esta acción no se puede deshacer.
+          </p>
+          <div class="form-actions">
+            <button type="button" class="action-btn danger" (click)="confirmarEliminacion()" [disabled]="eliminandoPago()">
+              {{ eliminandoPago() ? 'Eliminando...' : 'Eliminar' }}
+            </button>
+            <button type="button" class="action-btn secondary" (click)="cancelarEliminacion()" [disabled]="eliminandoPago()">
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+</section>

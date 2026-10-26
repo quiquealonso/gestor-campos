@@ -1,0 +1,34 @@
+<div class="layout-wrapper">
+  @if (supabase.sesion()) {
+    <header class="topbar">
+      <span class="topbar-title"><img class="topbar-logo" src="logo.svg" alt="" /> Gestor Campos</span>
+      <button type="button" class="topbar-exit" (click)="cerrarSesion()" aria-label="Cerrar sesión" title="Cerrar sesión">
+        <i class="pi pi-sign-out" aria-hidden="true"></i>
+      </button>
+    </header>
+  }
+
+  <main class="content-area">
+    <router-outlet></router-outlet>
+  </main>
+
+  @if (supabase.sesion()) {
+  <nav class="main-nav" aria-label="Navegación principal">
+    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+      <i class="pi pi-home" aria-hidden="true"></i><span>Campos</span>
+    </a>
+    <a routerLink="/gastos" routerLinkActive="active">
+      <i class="pi pi-wallet" aria-hidden="true"></i><span>Gastos</span>
+    </a>
+    <a routerLink="/ingresos" routerLinkActive="active">
+      <i class="pi pi-money-bill" aria-hidden="true"></i><span>Ingresos</span>
+    </a>
+    <a routerLink="/estadisticas" routerLinkActive="active">
+      <i class="pi pi-chart-bar" aria-hidden="true"></i><span>Estadísticas</span>
+    </a>
+    <a routerLink="/categorias" routerLinkActive="active">
+      <i class="pi pi-tags" aria-hidden="true"></i><span>Categorías</span>
+    </a>
+  </nav>
+  }
+</div>

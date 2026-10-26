@@ -1,0 +1,213 @@
+<section class="page page-ingresos">
+  @if (cargando()) {
+    <div class="state-box"><span class="spinner"></span><p>Cargando ingresos...</p></div>
+  } @else if (error()) {
+    <div class="state-box state-box--error" role="alert">
+      <strong>No se pudieron cargar los ingresos</strong>
+      <p>{{ error() }}</p>
+      <button type="button" class="action-btn" (click)="reintentar()">Reintentar</button>
+    </div>
+  } @else {
+    <div class="ingresos-header">
+      <div class="filter-row filter-row--top">
+        <a routerLink="/" class="back-arrow back-arrow--mobile-nav" aria-label="Volver">←</a>
+        <label class="filter-label">
+          Año:
+          <select [ngModel]="anioSeleccionado()" (ngModelChange)="onAnioChange($event)">
+            @for (ano of anosDisponibles(); track ano) {
+              <option [ngValue]="ano">{{ ano }}</option>
+            }
+          </select>
+        </label>
+        <label class="filter-label">
+          Campo:
+          <select [ngModel]="campoFiltroId()" (ngModelChange)="onCampoFiltroChange($event)">
+            <option [ngValue]="null">Todos</option>
+            @for (campo of campos(); track campo.id) {
+              <option [ngValue]="campo.id">{{ campo.nombre }}</option>
+            }
+          </select>
+        </label>
+      </div>
+
+      <div class="action-group action-group--mobile">
+        <button type="button" class="action-btn" (click)="abrirFormulario()">Nuevo ingreso</button>
+      </div>
+
+      <div class="title-row ingresos-title">
+        <div class="title-with-back">
+          <a routerLink="/" class="back-arrow">← </a>
+          <h1>Ingresos</h1>
+        </div>
+        <div class="action-group action-group--desktop">
+          <button type="button" class="action-btn" (click)="abrirFormulario()">Nuevo ingreso</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="summary-inline">
+      <div class="summary-item-inline">
+        <span>Total</span>
+        <strong>{{ totalIngresos() | currency: 'EUR' }}</strong>
+      </div>
+      <div class="summary-item-inline">
+        <span>Cantidad</span>
+        <strong>{{ chequesFiltrados().length }}</strong>
+      </div>
+    </div>
+
+    @if (campos().length === 0) {
+      <div class="state-box">
+        <strong>Primero añade un campo</strong>
+        <p>Los ingresos se registran sobre un campo.</p>
+        <a routerLink="/" class="action-btn">Ir a Campos</a>
+      </div>
+    } @else {
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="sortable" (click)="cambiarOrden('dia')">
+                Día
+                @if (ordenPor() === 'dia') {
+                  <span class="sort-icon">{{ ordenAscendente() ? '↑' : '↓' }}</span>
+                }
+              </th>
+              <th>Campo</th>
+              <th class="sortable" (click)="cambiarOrden('cantidad')">
+                Cantidad
+                @if (ordenPor() === 'cantidad') {
+                  <span class="sort-icon">{{ ordenAscendente() ? '↑' : '↓' }}</span>
+                }
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (cheque of chequesEnPagina(); track cheque.id) {
+              <tr
+                class="pago-row"
+                tabindex="0"
+                (click)="editar(cheque)"
+                (keydown.enter)="editar(cheque)"
+                (keydown.space)="$event.preventDefault(); editar(cheque)"
+              >
+                <td>{{ cheque.dia | date: 'dd/MM/yyyy' }}</td>
+                <td>{{ nombreCampo(cheque) }}</td>
+                <td class="coste-cell">{{ cheque.cantidad | currency: 'EUR' }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="3" class="empty-row">
+                  No hay ingresos registrados en {{ anioSeleccionado() }}. Pulsa «Nuevo ingreso» para añadir el primero.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (totalPaginas() > 1) {
+        <div class="pagination">
+          <button type="button" class="pagination-btn" (click)="paginaAnterior()" [disabled]="paginaActual() === 1" aria-label="Página anterior">
+            &#8249; Anterior
+          </button>
+          <span class="pagination-info">{{ paginaActual() }} / {{ totalPaginas() }}</span>
+          <button type="button" class="pagination-btn" (click)="paginaSiguiente()" [disabled]="paginaActual() === totalPaginas()" aria-label="Página siguiente">
+            Siguiente &#8250;
+          </button>
+        </div>
+      }
+    }
+  }
+
+  @if (mostrarFormulario()) {
+    <div class="form-panel" role="presentation">
+      <button type="button" class="form-panel-backdrop" aria-label="Cerrar" (click)="cerrarFormulario()"></button>
+      <div
+        class="form-card form-card--dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="dialog-ingreso-title"
+        (click)="$event.stopPropagation()"
+      >
+        <h2 id="dialog-ingreso-title">{{ editandoId() ? 'Editar ingreso' : 'Nuevo ingreso' }}</h2>
+        <p class="dialog-lead">
+          {{ editandoId() ? 'Modifica el ingreso o elimínalo.' : 'Registra un cheque cobrado y asígnalo a un campo.' }}
+        </p>
+        <div class="form-grid">
+          <label>
+            Campo
+            <select [ngModel]="campoFormularioId()" (ngModelChange)="campoFormularioId.set($event)">
+              <option [ngValue]="null">-- Selecciona un campo --</option>
+              @for (campo of campos(); track campo.id) {
+                <option [ngValue]="campo.id">{{ campo.nombre }}</option>
+              }
+            </select>
+          </label>
+          <label>
+            Día
+            <input type="date" [(ngModel)]="nuevoCheque.dia" />
+          </label>
+          <label>
+            Año (opcional)
+            <input type="number" [(ngModel)]="nuevoCheque.anio" />
+          </label>
+          <label>
+            Cantidad
+            <input type="number" step="0.01" min="0" [(ngModel)]="nuevoCheque.cantidad" />
+          </label>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="action-btn" (click)="guardar()" [disabled]="guardando()">
+            {{ guardando() ? 'Guardando...' : editandoId() ? 'Actualizar ingreso' : 'Guardar ingreso' }}
+          </button>
+          <button type="button" class="action-btn secondary" (click)="cerrarFormulario()">Cancelar</button>
+          @if (editandoId()) {
+            <button
+              type="button"
+              class="action-btn danger"
+              (click)="pedirEliminar(chequeEnEdicion())"
+              [disabled]="guardando()"
+            >
+              Eliminar
+            </button>
+          }
+        </div>
+        @if (mensaje()) {
+          <p class="form-message">{{ mensaje() }}</p>
+        }
+      </div>
+    </div>
+  }
+
+  @if (chequeAEliminar(); as chequeEliminar) {
+    <div class="form-panel form-panel--confirm" role="presentation">
+      <button type="button" class="form-panel-backdrop" aria-label="Cancelar" (click)="cancelarEliminar()"></button>
+      <div
+        class="form-card form-card--dialog form-card--confirm"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="dialog-eliminar-ingreso-title"
+        (click)="$event.stopPropagation()"
+      >
+        <h2 id="dialog-eliminar-ingreso-title">Eliminar ingreso</h2>
+        <p class="dialog-lead">
+          ¿Seguro que quieres eliminar el ingreso de
+          <strong>{{ chequeEliminar.cantidad | currency: 'EUR' }}</strong> del
+          {{ chequeEliminar.dia | date: 'dd/MM/yyyy' }}? Esta acción no se puede deshacer.
+        </p>
+        <div class="form-actions">
+          <button type="button" class="action-btn danger" (click)="confirmarEliminar()" [disabled]="eliminando()">
+            {{ eliminando() ? 'Eliminando...' : 'Eliminar' }}
+          </button>
+          <button type="button" class="action-btn secondary" (click)="cancelarEliminar()" [disabled]="eliminando()">
+            Cancelar
+          </button>
+        </div>
+        @if (errorEliminar()) {
+          <p class="form-message">{{ errorEliminar() }}</p>
+        }
+      </div>
+    </div>
+  }
+</section>

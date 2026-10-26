@@ -1,0 +1,9 @@
+{
+  "appId": "com.gestorcampos.app",
+  "appName": "Gestor Campos",
+  "webDir": "dist/gestor-campos/browser",
+  "backgroundColor": "#0d1117",
+  "android": {
+    "allowMixedContent": false
+  }
+}

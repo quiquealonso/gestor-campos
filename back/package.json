@@ -1,0 +1,46 @@
+{
+    "name": "barAssistantBack",
+    "version": "0.0.1",
+    "description": "Awesome project developed with TypeORM.",
+    "type": "commonjs",
+    "devDependencies": {
+        "@types/node": "^22.13.10",
+        "@types/ws": "^8.18.1",
+        "concurrently": "^9.2.1",
+        "onchange": "^7.1.0",
+        "ts-node": "^10.9.2",
+        "ts-node-dev": "^2.0.0",
+        "typescript": "^5.8.2"
+    },
+    "dependencies": {
+        "body-parser": "^1.20.3",
+        "copyfiles": "^2.4.1",
+        "cors": "^2.8.5",
+        "dotenv": "^17.2.3",
+        "express": "^4.21.2",
+        "neondatabase": "^0.0.1-security",
+        "pg": "^8.14.1",
+        "reflect-metadata": "^0.2.2",
+        "socket.io": "^4.8.3",
+        "typeorm": "0.3.27",
+        "ws": "^8.18.3"
+    },
+    "scripts": {
+        "start1": "ts-node src/index.ts local",
+        "start": "ts-node-dev --respawn --transpile-only src/index.ts local",
+        "build": "tsc",
+        "sync-db": "ts-node src/sync-database.ts local",
+        "typeorm": "typeorm-ts-node-commonjs",
+        "dev": "concurrently \"npm run start\" \"npm run watch-controller\" \"npm run watch-entities\"",
+        "copy-entities": "copyfiles -u 2 ./src/entity/* ../barassistantshared/src/entity",
+        "copy-controller": "copyfiles -u 2 ./src/controller/SocketController.ts ../barassistantshared/src/controller",
+        "watch-entities": "onchange \"src/entity/*.ts\" -- npm run copy-entities",
+        "watch-controller": "onchange \"src/controller/SocketController.ts\" -- npm run copy-controller",
+        "start:local": "ts-node-dev --respawn --transpile-only src/index.ts local",
+        "start:supabase": "ts-node-dev --respawn --transpile-only src/index.ts supabase",
+        "sync-db:local": "ts-node src/sync-database.ts local",
+        "sync-db:supabase": "ts-node src/sync-database.ts supabase",
+        "migrate:local-to-supabase": "ts-node src/migrate-data.ts --from=local --to=supabase",
+        "migrate:supabase-to-local": "ts-node src/migrate-data.ts --from=supabase --to=local"
+    }
+}

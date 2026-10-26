@@ -1,0 +1,220 @@
+<section class="page page-general">
+  <div class="general-header">
+  <div class="filter-row filter-row--top">
+    <label class="filter-label">
+      Filtrar por año:
+      <select
+        [ngModel]="anioSeleccionado()"
+        (ngModelChange)="onAnioSeleccionadoChange($event)"
+      >
+        @for (anio of aniosDisponibles(); track anio) {
+          <option [ngValue]="anio">{{ anio }}</option>
+        }
+      </select>
+    </label>
+  </div>
+
+  <div class="title-actions title-actions--mobile">
+    <a routerLink="/gastos" class="action-btn">Ver gastos</a>
+    <button type="button" class="action-btn" (click)="abrirFormularioPagoConjunto()">Pago conjunto</button>
+    <button type="button" class="action-btn" (click)="abrirFormularioCampo()">Añadir campo</button>
+  </div>
+
+  <div class="title-row">
+    <h1>Vista General De Campos</h1>
+    <div class="title-actions title-actions--desktop">
+      <a routerLink="/gastos" class="action-btn">Ver gastos</a>
+      <button type="button" class="action-btn" (click)="abrirFormularioPagoConjunto()">Pago conjunto</button>
+      <button type="button" class="action-btn" (click)="abrirFormularioCampo()">Añadir campo</button>
+    </div>
+  </div>
+  </div>
+
+  @if (mostrarFormularioPagoConjunto()) {
+    <div class="form-panel" role="presentation">
+      <button
+        type="button"
+        class="form-panel-backdrop"
+        aria-label="Cerrar"
+        (click)="cerrarFormularioPagoConjunto()"
+      ></button>
+      <div
+        class="form-card form-card--dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="dialog-pago-conjunto-title"
+        (click)="$event.stopPropagation()"
+      >
+        <h2 id="dialog-pago-conjunto-title">Nuevo pago conjunto</h2>
+        <p class="dialog-lead">El coste se reparte entre todos los campos.</p>
+        <div class="form-grid">
+          <label>
+            Fecha
+            <input type="date" [(ngModel)]="nuevoPagoConjunto.fecha" />
+          </label>
+          <label>
+            Año (opcional)
+            <input type="number" [(ngModel)]="nuevoPagoConjunto.anio" />
+          </label>
+          <label>
+            Nombre
+            <input type="text" [(ngModel)]="nuevoPagoConjunto.nombre" />
+          </label>
+          <label>
+            Coste total
+            <input type="number" step="0.01" [(ngModel)]="nuevoPagoConjunto.coste" />
+          </label>
+          <div class="full-row">
+            <app-categoria-select [(categorias)]="categorias" [(valor)]="categoriaConjuntoId" />
+          </div>
+          <label class="full-row">
+            Descripción (opcional)
+            <input type="text" [(ngModel)]="nuevoPagoConjunto.descripcion" />
+          </label>
+          <label class="full-row check-pagado">
+            <input type="checkbox" [(ngModel)]="nuevoPagoConjunto.pagado" />
+            Pagado del todo
+          </label>
+        </div>
+        <div class="form-actions">
+          <button
+            type="button"
+            class="action-btn"
+            (click)="guardarPagoConjunto()"
+            [disabled]="guardandoPagoConjunto()"
+          >
+            {{ guardandoPagoConjunto() ? 'Guardando...' : 'Guardar pago conjunto' }}
+          </button>
+          <button type="button" class="action-btn secondary" (click)="cerrarFormularioPagoConjunto()">
+            Cancelar
+          </button>
+        </div>
+        @if (mensajePagoConjunto()) {
+          <p class="form-message">{{ mensajePagoConjunto() }}</p>
+        }
+      </div>
+    </div>
+  }
+
+  @if (mostrarFormularioCampo()) {
+    <div class="form-panel" role="presentation">
+      <button
+        type="button"
+        class="form-panel-backdrop"
+        aria-label="Cerrar"
+        (click)="cerrarFormularioCampo()"
+      ></button>
+      <div
+        class="form-card form-card--dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="dialog-nuevo-campo-title"
+        (click)="$event.stopPropagation()"
+      >
+        <h2 id="dialog-nuevo-campo-title">Nuevo campo</h2>
+        <p class="dialog-lead">Añade un campo para empezar a registrar gastos e ingresos.</p>
+        <div class="form-grid">
+          <label>
+            Nombre
+            <input type="text" [(ngModel)]="nuevoCampo.nombre" />
+          </label>
+          <label>
+            Tamano
+            <input type="number" [(ngModel)]="nuevoCampo.tamano" />
+          </label>
+          <label>
+            Poligono
+            <input type="number" [(ngModel)]="nuevoCampo.poligono" />
+          </label>
+          <label>
+            Parcela
+            <input type="number" [(ngModel)]="nuevoCampo.parcela" />
+          </label>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="action-btn" (click)="guardarCampo()" [disabled]="guardandoCampo()">
+            {{ guardandoCampo() ? 'Guardando...' : 'Guardar campo' }}
+          </button>
+          <button type="button" class="action-btn secondary" (click)="cerrarFormularioCampo()">
+            Cancelar
+          </button>
+        </div>
+        @if (mensajeCampo()) {
+          <p class="form-message">{{ mensajeCampo() }}</p>
+        }
+      </div>
+    </div>
+  }
+
+  @if (cargando()) {
+    <div class="state-box"><span class="spinner"></span><p>Cargando datos...</p></div>
+  } @else {
+
+    @if (mensajePagoConjunto() && !mostrarFormularioPagoConjunto()) {
+      <p class="form-message">{{ mensajePagoConjunto() }}</p>
+    }
+
+    <div class="summary-cards">
+      <div class="summary-card">
+        <span>Hanegadas</span>
+        <strong>{{ totalSuperficie() | number: '1.0-2' }}</strong>
+      </div>
+      <div class="summary-card">
+        <span>Total Gastos</span>
+        <strong>{{ totalGastos() | currency: 'EUR' }}</strong>
+      </div>
+      <div class="summary-card income">
+        <span>Total Ingresos</span>
+        <strong>{{ totalIngreso() | currency: 'EUR' }}</strong>
+      </div>
+      <div class="summary-card" [ngClass]="{ profit: totalBeneficio() >= 0, loss: totalBeneficio() < 0 }">
+        <span>Beneficio/Pérdida</span>
+        <strong>{{ totalBeneficio() | currency: 'EUR' }}</strong>
+      </div>
+    </div>
+
+    <p class="per-unit-hint">
+      Beneficio por hanegada: <strong [ngClass]="{ profit: beneficioPorUnidad() >= 0, loss: beneficioPorUnidad() < 0 }">{{ beneficioPorUnidad() | currency: 'EUR' }}</strong>
+    </p>
+
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Gastos</th>
+            <th>Ingresos</th>
+            <th class="th-beneficio">Beneficio</th>
+            <th class="col-desktop">€/hanegada</th>
+            <th class="col-desktop">Tamano</th>
+            <th class="col-desktop">Poligono</th>
+            <th class="col-desktop">Parcela</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (campo of camposConFinanzas(); track campo.id) {
+            <tr
+              class="data-row"
+              [routerLink]="['/campos', campo.id]"
+              tabindex="0"
+              [attr.aria-label]="'Ver detalle de ' + campo.nombre"
+            >
+              <td class="cell-nombre">{{ campo.nombre }}</td>
+              <td class="expense">{{ campo.totalGastos | currency: 'EUR' }}</td>
+              <td class="income">{{ campo.totalIngreso | currency: 'EUR' }}</td>
+              <td [ngClass]="{ profit: campo.beneficio >= 0, loss: campo.beneficio < 0 }">
+                {{ campo.beneficio | currency: 'EUR' }}
+              </td>
+              <td class="col-desktop" [ngClass]="{ profit: campo.beneficioPorUnidad >= 0, loss: campo.beneficioPorUnidad < 0 }">
+                {{ campo.beneficioPorUnidad | currency: 'EUR' }}
+              </td>
+              <td class="col-desktop">{{ campo.tamano }}</td>
+              <td class="col-desktop">{{ campo.poligono }}</td>
+              <td class="col-desktop">{{ campo.parcela }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

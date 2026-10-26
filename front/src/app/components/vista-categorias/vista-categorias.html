@@ -1,0 +1,241 @@
+<section class="page page-categorias">
+  @if (cargando()) {
+    <div class="state-box"><span class="spinner"></span><p>Cargando categorías...</p></div>
+  } @else if (error()) {
+    <div class="state-box state-box--error" role="alert">
+      <strong>No se pudieron cargar las categorías</strong>
+      <p>{{ error() }}</p>
+      <button type="button" class="action-btn" (click)="reintentar()">Reintentar</button>
+    </div>
+  } @else {
+    <div class="title-row cat-title">
+      <div class="title-with-back">
+        <a routerLink="/" class="back-arrow">← </a>
+        <h1>Categorías</h1>
+      </div>
+      <button type="button" class="action-btn" (click)="abrirNueva()">Nueva categoría</button>
+    </div>
+
+    <div class="summary-inline">
+      <div class="summary-item-inline">
+        <span>Categorías</span>
+        <strong>{{ categorias().length }}</strong>
+      </div>
+      <div class="summary-item-inline">
+        <span>Gastos totales</span>
+        <strong>{{ totalGastos() | currency: 'EUR' }}</strong>
+      </div>
+    </div>
+
+    @if (aviso()) {
+      <p class="form-message cat-aviso">{{ aviso() }}</p>
+    }
+
+    @if (filas().length === 0) {
+      <div class="state-box">
+        <strong>Todavía no hay categorías</strong>
+        <p>Crea la primera para empezar a clasificar tus gastos.</p>
+        <button type="button" class="action-btn" (click)="abrirNueva()">Nueva categoría</button>
+      </div>
+    } @else {
+      <ul class="cat-items">
+        @for (fila of filas(); track fila.id) {
+          <li class="cat-item" [class.cat-item--open]="expandida() === fila.id">
+            <div class="cat-item__head">
+              <button
+                type="button"
+                class="cat-item__toggle"
+                (click)="alternar(fila)"
+                [attr.aria-expanded]="expandida() === fila.id"
+              >
+                <i class="cat-dot" [style.background]="fila.color"></i>
+                <span class="cat-item__name">{{ fila.nombre }}</span>
+                <span class="cat-item__meta">
+                  {{ fila.pagos.length }} pago{{ fila.pagos.length === 1 ? '' : 's' }} · {{ fila.total | currency: 'EUR' }}
+                </span>
+                <i class="pi" [ngClass]="expandida() === fila.id ? 'pi-chevron-up' : 'pi-chevron-down'" aria-hidden="true"></i>
+              </button>
+              @if (fila.id !== SIN_ASIGNAR) {
+                <div class="cat-item__actions">
+                  <button type="button" class="action-btn small" (click)="abrirEditar(fila)">Editar</button>
+                  @if (!fila.protegida) {
+                    <button type="button" class="action-btn small danger" (click)="pedirEliminarCategoria(fila)">Eliminar</button>
+                  }
+                </div>
+              }
+            </div>
+
+            @if (expandida() === fila.id) {
+              <div class="cat-item__body">
+                @if (fila.pagos.length === 0) {
+                  <p class="cat-empty">Esta categoría no tiene pagos asociados.</p>
+                } @else {
+                  <div class="table-scroll">
+                    <table class="data-table">
+                      <thead>
+                        <tr>
+                          <th>Fecha</th>
+                          <th>Pago</th>
+                          <th>Coste</th>
+                          <th class="th-acciones">Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (pago of pagosOrdenados(fila).slice(0, visibles()); track pago.id) {
+                          <tr>
+                            <td>{{ pago.fecha | date: 'dd/MM/yyyy' }}</td>
+                            <td class="cell-nombre">
+                              {{ pago.nombre }}<br /><small>{{ pago.campo?.nombre }}</small>
+                            </td>
+                            <td class="expense">
+                              {{ pago.coste | currency: 'EUR' }}
+                              @if (pago.pagado === false) {
+                                <br /><span class="badge-pendiente">Pendiente</span>
+                              }
+                            </td>
+                            <td class="td-acciones">
+                              <select
+                                class="mover-select"
+                                [ngModel]="null"
+                                (ngModelChange)="moverPago(pago, $event)"
+                                [disabled]="movimiento() === pago.id"
+                                aria-label="Mover a otra categoría"
+                              >
+                                <option [ngValue]="null" disabled selected>Mover a…</option>
+                                @for (c of categorias(); track c.id) {
+                                  @if (c.id !== fila.id) {
+                                    <option [ngValue]="c.id">{{ c.nombre }}</option>
+                                  }
+                                }
+                              </select>
+                              <button
+                                type="button"
+                                class="icon-btn"
+                                (click)="pedirEliminarPago(pago)"
+                                aria-label="Eliminar pago"
+                                title="Eliminar pago"
+                              >
+                                <i class="pi pi-trash" aria-hidden="true"></i>
+                              </button>
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                  @if (fila.pagos.length > visibles()) {
+                    <button type="button" class="action-btn secondary cat-more" (click)="visibles.set(visibles() + PAGINA)">
+                      Mostrar más ({{ fila.pagos.length - visibles() }})
+                    </button>
+                  }
+                }
+              </div>
+            }
+          </li>
+        }
+      </ul>
+    }
+  }
+
+  <!-- Crear / editar categoría -->
+  @if (mostrarFormulario()) {
+    <div class="form-panel" role="presentation">
+      <button type="button" class="form-panel-backdrop" aria-label="Cerrar" (click)="cerrarFormulario()"></button>
+      <div class="form-card form-card--dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-cat-title" (click)="$event.stopPropagation()">
+        <h2 id="dialog-cat-title">{{ editandoId() ? 'Editar categoría' : 'Nueva categoría' }}</h2>
+        <div class="form-grid">
+          <label class="full-row">
+            Nombre
+            <input type="text" maxlength="60" [(ngModel)]="formNombre" (keydown.enter)="guardarCategoria()" placeholder="Ej. Alquiler de maquinaria" />
+          </label>
+          <label class="full-row color-row">
+            Color
+            <span class="color-pick">
+              <input type="color" [(ngModel)]="formColor" />
+              <span class="cat-chip" [style.--cat]="formColor">{{ formNombre.trim() || 'Vista previa' }}</span>
+            </span>
+          </label>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="action-btn" (click)="guardarCategoria()" [disabled]="guardando()">
+            {{ guardando() ? 'Guardando...' : editandoId() ? 'Guardar cambios' : 'Crear categoría' }}
+          </button>
+          <button type="button" class="action-btn secondary" (click)="cerrarFormulario()">Cancelar</button>
+        </div>
+        @if (mensajeForm()) {
+          <p class="form-message">{{ mensajeForm() }}</p>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Eliminar categoría -->
+  @if (categoriaAEliminar(); as cat) {
+    <div class="form-panel form-panel--confirm" role="presentation">
+      <button type="button" class="form-panel-backdrop" aria-label="Cancelar" (click)="cancelarEliminarCategoria()"></button>
+      <div class="form-card form-card--dialog" role="alertdialog" aria-modal="true" aria-labelledby="dialog-del-cat-title" (click)="$event.stopPropagation()">
+        <h2 id="dialog-del-cat-title">Eliminar «{{ cat.nombre }}»</h2>
+        @if (cat.pagos.length === 0) {
+          <p class="dialog-lead">Esta categoría no tiene pagos. Se eliminará sin más.</p>
+        } @else {
+          <p class="dialog-lead">
+            Tiene <strong>{{ cat.pagos.length }} pago(s)</strong> por <strong>{{ cat.total | currency: 'EUR' }}</strong>. ¿Qué hacemos con ellos?
+          </p>
+          <div class="opciones">
+            <label class="opcion">
+              <input type="radio" name="accion" value="sin" [(ngModel)]="accionEliminar" />
+              <span>Dejarlos en «Sin categoría»</span>
+            </label>
+            <label class="opcion">
+              <input type="radio" name="accion" value="mover" [(ngModel)]="accionEliminar" />
+              <span>Moverlos a otra categoría</span>
+            </label>
+            @if (accionEliminar === 'mover') {
+              <select class="opcion-select" [(ngModel)]="destinoEliminar">
+                <option [ngValue]="null">-- Elige categoría --</option>
+                @for (c of otrasCategorias(cat); track c.id) {
+                  <option [ngValue]="c.id">{{ c.nombre }}</option>
+                }
+              </select>
+            }
+            <label class="opcion opcion--peligro">
+              <input type="radio" name="accion" value="eliminar" [(ngModel)]="accionEliminar" />
+              <span>Eliminar también sus {{ cat.pagos.length }} pagos (no se puede deshacer)</span>
+            </label>
+          </div>
+        }
+        <div class="form-actions">
+          <button type="button" class="action-btn danger" (click)="confirmarEliminarCategoria()" [disabled]="eliminandoCategoria()">
+            {{ eliminandoCategoria() ? 'Eliminando...' : 'Eliminar categoría' }}
+          </button>
+          <button type="button" class="action-btn secondary" (click)="cancelarEliminarCategoria()" [disabled]="eliminandoCategoria()">Cancelar</button>
+        </div>
+        @if (errorEliminarCategoria()) {
+          <p class="form-message">{{ errorEliminarCategoria() }}</p>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Eliminar pago -->
+  @if (pagoAEliminar(); as pago) {
+    <div class="form-panel form-panel--confirm" role="presentation">
+      <button type="button" class="form-panel-backdrop" aria-label="Cancelar" (click)="cancelarEliminarPago()"></button>
+      <div class="form-card form-card--dialog form-card--confirm" role="alertdialog" aria-modal="true" aria-labelledby="dialog-del-pago-title" (click)="$event.stopPropagation()">
+        <h2 id="dialog-del-pago-title">Eliminar pago</h2>
+        <p class="dialog-lead">
+          ¿Seguro que quieres eliminar <strong>{{ pago.nombre }}</strong> ({{ pago.coste | currency: 'EUR' }})? Esta acción no se puede deshacer.
+        </p>
+        <div class="form-actions">
+          <button type="button" class="action-btn danger" (click)="confirmarEliminarPago()" [disabled]="eliminandoPago()">
+            {{ eliminandoPago() ? 'Eliminando...' : 'Eliminar' }}
+          </button>
+          <button type="button" class="action-btn secondary" (click)="cancelarEliminarPago()" [disabled]="eliminandoPago()">Cancelar</button>
+        </div>
+        @if (errorEliminarPago()) {
+          <p class="form-message">{{ errorEliminarPago() }}</p>
+        }
+      </div>
+    </div>
+  }
+</section>

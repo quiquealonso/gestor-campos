@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Gestor Campos">
+  <defs>
+    <linearGradient id="fondo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1b2a3c"/>
+      <stop offset="1" stop-color="#0d1117"/>
+    </linearGradient>
+    <linearGradient id="hoja" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#2ea043"/>
+      <stop offset="1" stop-color="#7ee787"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="30" fill="url(#fondo)"/>
+  <!-- surcos del campo -->
+  <g fill="none" stroke="#58a6ff" stroke-linecap="round" stroke-width="5" opacity=".9">
+    <path d="M18 100 Q64 78 110 100"/>
+    <path d="M26 112 Q64 92 102 112" opacity=".6"/>
+  </g>
+  <!-- hoja -->
+  <path d="M64 86 C36 74 34 44 54 28 C64 20 82 18 94 20 C98 40 94 62 80 74 C75 79 70 83 64 86 Z" fill="url(#hoja)"/>
+  <path d="M64 86 C68 64 76 46 90 26" fill="none" stroke="#0d1117" stroke-width="4" stroke-linecap="round" opacity=".55"/>
+</svg>

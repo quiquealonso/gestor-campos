@@ -1,0 +1,12 @@
+{
+  "name": "gestor-campos-video",
+  "private": true,
+  "description": "Vídeo de presentación de Gestor Campos: grabación automática con Playwright sobre el modo demo (datos ficticios)",
+  "type": "module",
+  "scripts": {
+    "grabar": "node grabar.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.56.0"
+  }
+}

@@ -1,0 +1,24 @@
+node_modules/
+.angular/
+out-tsc/
+
+# Builds (la demo publicada en docs/demo sí se sube: es la de GitHub Pages)
+front/dist/
+front/dist-electron/
+*.apk
+
+# Credenciales y configuración real
+.env
+.env.*
+!.env.example
+front/src/enviroments/environment.local.ts
+
+# Vídeo: grabaciones sueltas (la publicada va en docs/media en MP4)
+video/out/
+*.webm
+
+# Herramientas locales
+.claude/
+.idea/
+.vscode/
+*.log
