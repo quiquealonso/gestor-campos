@@ -14,7 +14,7 @@ import { environment } from '../../../enviroments/environment';
         <h1>Gestor Campos</h1>
         <p class="login-sub">Inicia sesión para continuar</p>
         @if (demo) {
-          <p class="login-demo">Modo demo con datos ficticios: escribe cualquier email y contraseña.</p>
+          <p class="login-demo">Demo con datos ficticios: el acceso ya está relleno, pulsa «Entrar».</p>
         }
 
         <label>
@@ -136,8 +136,9 @@ export class LoginComponent {
   private router = inject(Router);
 
   readonly demo = environment.demo;
-  email = '';
-  password = '';
+  // En la demo el acceso viene relleno con datos ficticios: no se envían a ningún sitio.
+  email = this.demo ? 'demo@gestorcampos.es' : '';
+  password = this.demo ? 'demo' : '';
   cargando = signal(false);
   error = signal('');
 

@@ -25,7 +25,7 @@ Resultado:
 
 - **Modo demo**: `ng build --configuration demo` usa `environment.demo.ts`, que sustituye
   `SupabaseService` y `CampoService` por `services/demo/demo.services.ts`. Los datos se generan en
-  memoria (`services/demo/datos-demo.ts`, siempre iguales) y el login acepta cualquier email:
+  memoria (`services/demo/datos-demo.ts`, siempre iguales) y el login viene relleno con un acceso ficticio (`demo@gestorcampos.es` / `demo`):
   **no se conecta a Supabase ni toca datos reales**.
 - La build demo sale en `docs/demo/`: es la misma que se publica en GitHub Pages.
 - **Grabación**: Playwright (`grabar.mjs`) sirve `docs/demo` en `localhost:4310`, carga un

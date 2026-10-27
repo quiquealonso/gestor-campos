@@ -214,9 +214,8 @@ try {
 
   // 1. Login
   await caption('Paso 1 · Acceso', 'Solo entras tú', 'Login con email y contraseña. Los datos están protegidos en la base de datos: nadie más puede verlos.');
-  await wait(1500);
-  await type(app.locator('input[type=email]'), 'agricultor@ejemplo.com');
-  await type(app.locator('input[type=password]'), 'demo-demo', 600);
+  // En la demo el acceso ya viene relleno con datos ficticios.
+  await wait(3000);
   await tap(button('Entrar'), 2200);
 
   // 2. Vista general

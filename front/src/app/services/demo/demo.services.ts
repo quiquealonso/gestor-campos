@@ -30,7 +30,7 @@ export class DemoSupabaseService implements Omit<Publico<SupabaseService>, 'clie
     return this.sesion()?.user?.email ?? '';
   }
 
-  /** En la demo vale cualquier email y contraseña: no se envían a ningún sitio. */
+  /** En la demo el acceso viene relleno (datos ficticios) y vale cualquiera: no se envía a ningún sitio. */
   async login(email: string, _password: string): Promise<void> {
     await new Promise((r) => setTimeout(r, 400));
     this.sesion.set({ user: { email: email.trim() || 'demo@ejemplo.com' } } as Session);
